@@ -1,7 +1,4 @@
-# FairDEx
-Practical Exchange for Unique Digital Goods
-
-This repository contains a research prototype and evaluation dataset of FairDEx protocol described in "Practical Exchange for Unique Digital Goods" to appear at the 3rd IEEE International Conference on Decentralized Applications and Infrastructures (IEEE DAPPS 2021).
+# ConfidentialFairExchange
 
 ## Getting Started
 
