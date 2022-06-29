@@ -3,7 +3,6 @@
 import json
 from web3 import Web3
 
-
 class FairdexReceiver:
     def __init__(self):
 
