@@ -2,9 +2,76 @@
 pragma solidity >=0.7.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
+// hashes: byte32 
+// r_i: uint 
+
 contract ConfidentialFairExchange {
+   
+    uint constant public MAX_INTERVAL = 3600; // 1 h timemax inteval between operations 
+
+    /******** INIT PHASE *******/
+    event FileRandomness(bytes32 indexed fileHash, uint randomness); 
     
-    address payable seller;
+    // struct containing info about the file to sell 
+    struct FileInfo {
+        address seller; 
+        uint depth; 
+        bytes32 sellerPublicKey; 
+        uint price; 
+        bytes32 description; 
+    }
+
+    // mapping associating to each hash the corrisponding FileInfo struct 
+    mapping(bytes32 => FileInfo) public fileInfos; 
+
+    function publishFile(bytes32 _fileHash, uint _depth, uint _price, bytes32 _sellerPublicKey) public {
+        require(fileInfos[_fileHash].seller == address(0), "The file has already been published"); 
+
+        fileInfos[_fileHash] = FileInfo(msg.sender, _depth, _sellerPublicKey, _price, 0); 
+        emit FileRandomness(_fileHash, uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp))));
+    }
+
+    function publishDescription(bytes32 _fileHash, bytes32 _description) public {
+        require(fileInfos[_fileHash].seller == msg.sender, "Only the seller can set the description"); 
+        require(fileInfos[_fileHash].description == 0, "The description has already been set"); 
+
+        fileInfos[_fileHash].description = _description; 
+    }
+
+    /**** BUYING PHASE *****/
+    event PurchaseRequest(bytes32 indexed fileHash, bytes32 indexed purchaseID, bytes32 secretHash, bytes32 encryptedSecret); 
+    event EncryptedKeyPublished(bytes32 indexed purchaseID, bytes32 encryptedKey); 
+
+    enum State { Requested, EncryptedKeyShared } 
+    struct Purchase { 
+        address buyer; 
+        uint lastOperationTime; 
+        State state; 
+    }
+
+    mapping(bytes32 => Purchase) purchases; 
+    function buy(bytes32 _fileHash, bytes32 _secretHash, bytes32 _encryptedSecret) public payable {
+        require(fileInfos[_fileHash].seller != address(0), "No file with requested hash is present inside the system"); 
+        require(fileInfos[_fileHash].description != 0, "The considered file has not description set yet"); 
+        require(msg.value == fileInfos[_fileHash].price, "The sent amount of money is lower than the file price"); 
+
+        bytes32 purchaseID = bytes32(keccak256(abi.encodePacked(msg.sender, _fileHash)));        
+        emit PurchaseRequest(_fileHash, purchaseID, _secretHash, _encryptedSecret);
+
+        purchases[purchaseID] = Purchase(msg.sender, block.timestamp, State.Requested);  
+        
+    }
+
+    function publishKey() public payable {}
+
+    function withdraw() public payable {
+        
+    }
+   
+}
+
+/*
+ address payable seller;
     address payable buyer = payable(address(0)); // BUYER_ADDRESS_HERE;
 
     // Added 10 minutes to timeout in each function call.
@@ -16,9 +83,7 @@ contract ConfidentialFairExchange {
     bytes32 description;
     bytes32 public masterKey;
 
-    enum State { Created, Paid, Published, Inactive }
-    // Initial value of state is State.Created.
-    State public state;
+
 
     event PaidWithDescription();
     event PublishedMasterKey();
@@ -109,4 +174,4 @@ contract ConfidentialFairExchange {
         require(_condition);
         _;
     }
-}
+    */
