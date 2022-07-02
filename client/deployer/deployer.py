@@ -38,7 +38,7 @@ def deploy_contact(contract_interface, deployer_wallet):
   
 seller_private_key, seller_address = generate_wallet()
 buyer_private_key, buyer_address = generate_wallet() 
-deployer_private_key, deployer_address = "0xe65bfddbccd18cfe199973521cc284d77567412ea76e9ee3007a11418eb772fd","0xAaeF0BFc1258800018b92FB63b4DeAd6ADf38b4B"# generate_wallet() 
+deployer_private_key, deployer_address = generate_wallet() 
 
 print("Deployer address and private key " + deployer_address + " " + deployer_private_key)
 input("Please insert balance inside deployer wallet, click when done...") 
