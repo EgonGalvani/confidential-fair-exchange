@@ -1,0 +1,16 @@
+{
+  "rpc_url": "https://rpc-mumbai.maticvigil.com/",
+  "contract_address": "0xbe2846973d31272eE014e6880E426eE9fa2A78Ae",
+  "seller": {
+    "private_key": "0xc718adce055a99f9f81ec53b8d058ae372ba838b471eb5b5db49d79dc27a017f",
+    "address": "0xA616272ABC03a4F2c9c51A1E33d76b4b1f4d2BFd"
+  },
+  "buyer": {
+    "private_key": "0x25054a40b295fbe002f9df9427dd5b6b0801edd25b30c4a1236b7a087421ed7b",
+    "address": "0x9E18Bc0Cb016bF9BE05eBc9dDe59f8bc63AeF081"
+  },
+  "deployer": {
+    "private_key": "0xe65bfddbccd18cfe199973521cc284d77567412ea76e9ee3007a11418eb772fd",
+    "address": "0xAaeF0BFc1258800018b92FB63b4DeAd6ADf38b4B"
+  }
+}
