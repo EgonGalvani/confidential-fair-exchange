@@ -44,7 +44,7 @@ print("Deployer address and private key " + deployer_address + " " + deployer_pr
 input("Please insert balance inside deployer wallet, click when done...") 
 
 # load contract interface
-contract_interface_f = open("./../../build/ConfidentialFairExchange.json", "r")
+contract_interface_f = open("./../build/ConfidentialFairExchange.json", "r")
 contract_interface = json.loads(contract_interface_f.read())
 contract_interface_f.close() 
 
@@ -74,5 +74,5 @@ settings_obj = {
   }
 }
 
-with open('./../settings.json', 'w') as f:
+with open('./data/settings.json', 'w') as f:
   json.dump(settings_obj, f, indent=2, separators=(',', ': '))

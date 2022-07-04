@@ -12,5 +12,6 @@
   "deployer": {
     "private_key": "0xe65bfddbccd18cfe199973521cc284d77567412ea76e9ee3007a11418eb772fd",
     "address": "0xAaeF0BFc1258800018b92FB63b4DeAd6ADf38b4B"
-  }
+  }, 
+  "file_price": 100
 }

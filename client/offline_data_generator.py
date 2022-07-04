@@ -50,15 +50,16 @@ for desc_depth in range(6, 14):
     "file_hash": file_hash, 
     "desc": description.hex(), 
     "desc_depth": desc_depth, 
+    "file_price": 100, 
     "samp": list(map(lambda random_index: {"index": random_index, "value": subkeys[random_index]}, random_indices))
   }); 
   
   # write the master key 
-  with open('master_keys.txt', 'a') as master_keys:
+  with open('./data/master_keys.txt', 'a') as master_keys:
     master_keys.write(str(master_key) + '\n')
 
 #for r in random_indices:
 #  offline_message.write(f'{Web3.toHex(subkeys[r])} {r}\n')
 
-with open('shared.json', 'w') as f:
+with open('./data/shared.json', 'w') as f:
   json.dump(file_infos, f, indent=2, separators=(',', ': '))
