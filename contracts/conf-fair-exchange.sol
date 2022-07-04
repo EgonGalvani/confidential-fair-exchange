@@ -13,7 +13,7 @@ contract ConfidentialFairExchange {
     // struct containing info about the file to sell 
     struct FileInfo {
         address seller; 
-        uint depth; 
+        uint depth;  // description depth   
         bytes32 sellerPublicKey; 
         uint price; 
         bytes32 description; 
@@ -115,7 +115,7 @@ contract ConfidentialFairExchange {
     }
 
     // Refund to buyer if seller does not publish master key in time.   
-    function refoundToBuyer(bytes32 _fileHash, bytes32 _purchaseID)
+    function refundToBuyer(bytes32 _fileHash, bytes32 _purchaseID)
         Only(_fileHash, _purchaseID, State.Requested, purchases[_purchaseID].buyer)
         public payable {
         
