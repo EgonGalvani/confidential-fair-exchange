@@ -21,7 +21,7 @@ file_infos = []
 subkey_depth = 14
 number_of_subkeys = 2 ** subkey_depth
 
-for desc_depth in range(6, 14): 
+for desc_depth in range(6, 15): # 6 to 14 
   master_key = "0x" + secrets.token_hex(32)
 
   # simulate the file hash 
