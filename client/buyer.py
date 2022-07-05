@@ -91,29 +91,60 @@ def calculate_merkle_root(arr):
   length = len(arr)
 
   if length == 2:
-      result = Web3.solidityKeccak(['bytes32', 'bytes32'], [arr[0], arr[1]])
+    result = Web3.solidityKeccak(['bytes32', 'bytes32'], [arr[0], arr[1]])
   else:
-      left_arr = arr[:length // 2]
-      right_arr = arr[length // 2:]
-      left_hash = calculate_merkle_root(left_arr)
-      right_hash = calculate_merkle_root(right_arr)
-      result = Web3.solidityKeccak(['bytes32', 'bytes32'], [left_hash, right_hash])
+    left_arr = arr[:length // 2]
+    right_arr = arr[length // 2:]
+    left_hash = calculate_merkle_root(left_arr)
+    right_hash = calculate_merkle_root(right_arr)
+    result = Web3.solidityKeccak(['bytes32', 'bytes32'], [left_hash, right_hash])
 
   return result
 
-def calculate_merkle_proof():
-  result = [nodes[1]]
+# consider as wrong the first node (node = hash(index, subkey[index]) )
+# create the merkle poof considering it as wrong
+def calculate_merkle_proof(nodes, desc_depth):
+  result = [nodes[1]] 
   start_pos = 2
 
   for i in range(1, desc_depth):
-      chunk_size = 2 ** i
-      end_pos = start_pos + chunk_size
-      arr = nodes[start_pos:end_pos]
-      result.append(calculate_merkle_root(arr))
-      start_pos = end_pos
+    chunk_size = 2 ** i
+    end_pos = start_pos + chunk_size
+    arr = nodes[start_pos:end_pos]
+    result.append(calculate_merkle_root(arr))
+    start_pos = end_pos
 
   return result
 
 # TODO: get list of events of published sales 
-# TODO: for each of them start a buy and raise objection 
+available_files = [] # each event will have a fileHash  
 
+for available_file, index in enumerate(available_files): 
+  
+  # secret creation 
+  secret = "0x" + secrets.token_hex(32) # TODO: check types 
+  secret_hash = Web3.solidityKeccak(['bytes32'], [secret])
+  secret_encrypted = "" 
+  
+  # buy request 
+  buy(available_file.fileHash, secret_hash, secret_encrypted) 
+  
+  # TODO: wait for the event with the purchaseID
+  purchase_event = {purchaseID: ""}
+
+  # TODO: wait for the key 
+  key_reveal_event = {}
+
+  # consider the pessimistic case: 
+  nodes = []
+  for desc_el_index, desc_el_value in shared[index]["samp"]: # for each element (index, value) that compose the description 
+    node = Web3.solidityKeccak(['bytes32', 'uint256'], [desc_el_value, desc_el_index])
+    nodes.append(node)
+  proof = calculate_merkle_proof(nodes, shared[index]["desc_depth"] ) 
+
+  # raiseObjection 
+  raiseObjection(available_file.fileHash, purchase_event.purchaseID, secret,
+    shared[index]["samp"][0]["index"], shared[index]["samp"][0]["value"], proof)
+
+  # refundToBuyer 
+  refundToBuyer(available_file.fileHash, purchase_event.purchaseID)
