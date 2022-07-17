@@ -4,6 +4,7 @@ import json
 import secrets
 from web3 import Web3 
 from web3.middleware import geth_poa_middleware
+from utils import get_events, subscribe_to_event, sign_and_wait
 
 def load_data(): 
   f = open("./data/settings.json", "r")
@@ -14,8 +15,8 @@ def load_data():
   shared = json.loads(f.read())
   f.close() 
 
-  f = open("./data/master_keys.txt", "r")
-  master_keys = f.readlines()
+  f = open("./data/master_keys.json", "r")
+  master_keys = json.loads(f.read())
   f.close() 
   return settings, shared, master_keys
 settings, shared, master_keys = load_data()
@@ -48,7 +49,7 @@ def publish_file(file_hash, desc_depth, seller_public_key) :
   )
 
   print("Publishing file sale opportunity...")
-  return sign_and_wait(transaction)
+  return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
 # function publishDescription(bytes32 _fileHash, bytes32 _description) public {
 def publish_description(file_hash, description) :
@@ -61,7 +62,7 @@ def publish_description(file_hash, description) :
   })
 
   print("Publishing description...")
-  return sign_and_wait(transaction)
+  return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
 # function publishKey(bytes32 _encryptedKey, bytes32 _fileHash, bytes32 _purchaseID) 
 def publish_master_key(encrypted_master_key, file_hash, purchase_ID):
@@ -76,8 +77,8 @@ def publish_master_key(encrypted_master_key, file_hash, purchase_ID):
       'value': collateral
   })
 
-  print("Publishing master key...")
-  return sign_and_wait(transaction)
+  print("Publishing encrypted master key...")
+  return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
 # function withdraw(bytes32 _fileHash, bytes32 _purchaseID) 
 def withdraw(file_hash, purchase_ID):
@@ -91,23 +92,31 @@ def withdraw(file_hash, purchase_ID):
   })
 
   print("Requesting withdraw...")
-  return sign_and_wait(transaction)
-
-def sign_and_wait(transaction):
-  signed_txn = web3.eth.account.signTransaction(transaction, private_key=settings["seller"]["private_key"])
-  tx_hash = web3.eth.sendRawTransaction(signed_txn.rawTransaction)
-  tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-  
-  print("Transaction correctly executed")
-  return tx_receipt
+  return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
 # first: init all files 
 for f in shared: # len(shared) 
-  publish_file(f["file_hash"], f["desc_depth"], "") # TODO: add encryption key
+  public_key = "0x" + secrets.token_hex(32) # TODO: manage encryption system 
+  publish_file(f["file_hash"], f["desc_depth"], public_key) 
   publish_description(f["file_hash"], f["desc"])
+  break 
 
-  input("Press enter to continue...")
-  publish_master_key()
+# wait for requests of purchase and share corresponding key 
+def callback(event): 
+  file_hash = event.args["fileHash"]
+  purchase_ID = event.args["purchaseID"]
 
-  # wait: withdraw
-  break
+  print("Received purchase_id: " + str(purchase_ID))
+
+  # TODO: write also the optimistic case 
+  # TODO: check on the encryption and hash of the secret 
+  
+  # pessimistic case: encrypted_master_key = wrong bytes 
+  encrypted_master_key = "0x" + secrets.token_hex(32)
+  publish_master_key(encrypted_master_key, file_hash, purchase_ID)
+
+print("Listening for purchase requests...")
+current_block_number = web3.eth.get_block('latest').number
+subscribe_to_event(web3, contract.events.PurchaseRequested, contract.address, callback, current_block_number)
+
+# publish_master_key()

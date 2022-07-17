@@ -4,6 +4,11 @@ import json
 import secrets
 from web3 import Web3 
 from web3.middleware import geth_poa_middleware
+import asyncio 
+from utils import get_events, sign_and_wait, wait_event_once, calculate_merkle_proof
+
+import warnings
+warnings.filterwarnings('ignore')
 
 def load_data(): 
   f = open("./data/settings.json", "r")
@@ -13,12 +18,8 @@ def load_data():
   f = open("./data/shared.json", "r")
   shared = json.loads(f.read())
   f.close() 
-
-  f = open("./data/master_keys.txt", "r")
-  master_keys = f.readlines()
-  f.close() 
-  return settings, shared, master_keys
-settings, shared, master_keys = load_data()
+  return settings, shared
+settings, shared = load_data()
 
 # set up provider
 web3 = Web3(Web3.HTTPProvider(settings["rpc_url"]))
@@ -39,7 +40,7 @@ def buy(file_hash, secret_hash, encrypted_secret):
   nonce = web3.eth.getTransactionCount(settings["buyer"]["address"])
   price = settings["file_price"] # in case: call the smart contract 
  
-  transaction = contract.functions.publishKey(file_hash, secret_hash, encrypted_secret).buildTransaction({
+  transaction = contract.functions.buy(file_hash, secret_hash, encrypted_secret).buildTransaction({
       # 'gas': 3000000,
       # 'gasPrice': web3.toWei(gas_price, 'gwei'),
       'from': settings["buyer"]["address"],
@@ -48,14 +49,14 @@ def buy(file_hash, secret_hash, encrypted_secret):
   })
 
   print("Requesting file purchase...")
-  return sign_and_wait(transaction)
+  return sign_and_wait(web3, transaction, settings["buyer"]["private_key"])
 
 # function raiseObjection(bytes32 _file_hash, bytes32 _purchase_ID, bytes32 _secret, POM memory pom)
 def raiseObjection(file_hash, purchase_ID, secret, committed_ri, committedSubKey, merkleTreePath):
   nonce = web3.eth.getTransactionCount(settings["buyer"]["address"])
   pom = (committed_ri, committedSubKey, merkleTreePath) # struct represent as tuple 
 
-  transaction = contract.functions.publishKey(file_hash, purchase_ID, secret, pom).buildTransaction({
+  transaction = contract.functions.raiseObjection(file_hash, purchase_ID, secret, pom).buildTransaction({
       # 'gas': 3000000,
       # 'gasPrice': web3.toWei(gas_price, 'gwei'),
       'from': settings["buyer"]["address"],
@@ -63,7 +64,7 @@ def raiseObjection(file_hash, purchase_ID, secret, committed_ri, committedSubKey
   })
 
   print("Requesting objection raising...")
-  return sign_and_wait(transaction)
+  return sign_and_wait(web3, transaction, settings["buyer"]["private_key"])
 
 # function refoundToBuyer(bytes32 _file_hash, bytes32 _purchase_ID)
 def refundToBuyer(file_hash, purchase_ID):
@@ -77,49 +78,14 @@ def refundToBuyer(file_hash, purchase_ID):
   })
 
   print("Requesting refund to buyer...")
-  return sign_and_wait(transaction)
+  return sign_and_wait(web3, transaction, settings["buyer"]["private_key"])
 
-def sign_and_wait(transaction):
-  signed_txn = web3.eth.account.signTransaction(transaction, private_key=settings["buyer"]["private_key"])
-  tx_hash = web3.eth.sendRawTransaction(signed_txn.rawTransaction)
-  tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-  
-  print("Transaction correctly executed")
-  return tx_receipt
+# get list of events of published sales 
+# available_files = get_events(web3, contract.events.FilePublished, contract.address, from_block=27202643, to_block=27203643)
+# print(available_files)
 
-def calculate_merkle_root(arr):
-  length = len(arr)
-
-  if length == 2:
-    result = Web3.solidityKeccak(['bytes32', 'bytes32'], [arr[0], arr[1]])
-  else:
-    left_arr = arr[:length // 2]
-    right_arr = arr[length // 2:]
-    left_hash = calculate_merkle_root(left_arr)
-    right_hash = calculate_merkle_root(right_arr)
-    result = Web3.solidityKeccak(['bytes32', 'bytes32'], [left_hash, right_hash])
-
-  return result
-
-# consider as wrong the first node (node = hash(index, subkey[index]) )
-# create the merkle poof considering it as wrong
-def calculate_merkle_proof(nodes, desc_depth):
-  result = [nodes[1]] 
-  start_pos = 2
-
-  for i in range(1, desc_depth):
-    chunk_size = 2 ** i
-    end_pos = start_pos + chunk_size
-    arr = nodes[start_pos:end_pos]
-    result.append(calculate_merkle_root(arr))
-    start_pos = end_pos
-
-  return result
-
-# TODO: get list of events of published sales 
-available_files = [] # each event will have a fileHash  
-
-for available_file, index in enumerate(available_files): 
+# assume at this point the seller has already initialize the files inside the smart contract 
+for index, file_to_buy in enumerate(shared): 
   
   # secret creation 
   secret = "0x" + secrets.token_hex(32) # TODO: check types 
@@ -127,24 +93,35 @@ for available_file, index in enumerate(available_files):
   secret_encrypted = "" 
   
   # buy request 
-  buy(available_file.fileHash, secret_hash, secret_encrypted) 
+  buy_receipt = buy(file_to_buy["file_hash"], secret_hash, secret_encrypted) 
+  purchase_event = contract.events.PurchaseRequested().processReceipt(buy_receipt)
+  purchase_ID = purchase_event[0].args["purchaseID"] 
+  print("current purchase_id: ") 
+  print(purchase_ID)
+
+  # wait for the key 
+  print("Waiting for the buyer to publish the key... ")
+  key_reveal_event = wait_event_once(web3, contract.events.EncryptedKeyPublished, contract.address, purchase_event[0].blockNumber, {"purchaseID": purchase_ID})
+  key = key_reveal_event[0].args["encryptedKey"]
+  print("Received key: ")
+  print(key)
   
-  # TODO: wait for the event with the purchaseID
-  purchase_event = {purchaseID: ""}
-
-  # TODO: wait for the key 
-  key_reveal_event = {}
-
   # consider the pessimistic case: 
   nodes = []
-  for desc_el_index, desc_el_value in shared[index]["samp"]: # for each element (index, value) that compose the description 
+  for desc_element in shared[index]["samp"]: # for each element (index, value) that compose the description 
+    desc_el_index, desc_el_value = desc_element["index"], desc_element["value"]
     node = Web3.solidityKeccak(['bytes32', 'uint256'], [desc_el_value, desc_el_index])
     nodes.append(node)
   proof = calculate_merkle_proof(nodes, shared[index]["desc_depth"] ) 
+  
+  balance = web3.eth.get_balance(settings["buyer"]["address"])
+  print("Balance before objection: " + str(balance))
 
   # raiseObjection 
-  raiseObjection(available_file.fileHash, purchase_event.purchaseID, secret,
+  raiseObjection(file_to_buy["file_hash"], purchase_ID, secret,
     shared[index]["samp"][0]["index"], shared[index]["samp"][0]["value"], proof)
+  
+  balance = web3.eth.get_balance(settings["buyer"]["address"])
+  print("Balance after objection: " + str(balance))
 
-  # refundToBuyer 
-  refundToBuyer(available_file.fileHash, purchase_event.purchaseID)
+  break 

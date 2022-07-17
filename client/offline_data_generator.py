@@ -17,6 +17,7 @@ def calculate_merkle_root(arr):
   return result
 
 file_infos = []
+master_keys_info = []
 
 subkey_depth = 14
 number_of_subkeys = 2 ** subkey_depth
@@ -54,12 +55,16 @@ for desc_depth in range(6, 15): # 6 to 14
     "samp": list(map(lambda random_index: {"index": random_index, "value": subkeys[random_index]}, random_indices))
   }); 
   
-  # write the master key 
-  with open('./data/master_keys.txt', 'a') as master_keys:
-    master_keys.write(str(master_key) + '\n')
+  master_keys_info.append({
+    "file_hash": file_hash, 
+    "master_key": str(master_key)
+  })
 
 #for r in random_indices:
 #  offline_message.write(f'{Web3.toHex(subkeys[r])} {r}\n')
 
 with open('./data/shared.json', 'w') as f:
   json.dump(file_infos, f, indent=2, separators=(',', ': '))
+
+with open('./data/master_keys.json', 'w') as f:
+  json.dump(master_keys_info, f, indent=2, separators=(',', ': '))

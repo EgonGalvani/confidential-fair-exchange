@@ -9,7 +9,8 @@ contract ConfidentialFairExchange {
 
     /******** INIT PHASE *******/
     event FileRandomness(bytes32 indexed fileHash, uint randomness); 
-    
+    event FilePublished(bytes32 indexed fileHash, bytes32 description); 
+
     // struct containing info about the file to sell 
     struct FileInfo {
         address seller; 
@@ -34,6 +35,7 @@ contract ConfidentialFairExchange {
         require(fileInfos[_fileHash].description == 0, "The description has already been set"); 
 
         fileInfos[_fileHash].description = _description; 
+        emit FilePublished(_fileHash, _description);
     }
 
     /**** BUYING PHASE *****/
@@ -96,14 +98,14 @@ contract ConfidentialFairExchange {
         require(keccak256(abi.encodePacked(_secret)) == purchases[_purchaseID].secretHash, "Provided secret is wrong"); 
         bytes32 key = purchases[_purchaseID].encryptedKey ^ _secret; 
         
-        bytes32 computedSubkey = keccak256(abi.encode(key, pom._committed_ri));
+        bytes32 computedSubkey = keccak256(abi.encodePacked(key, pom._committed_ri));
         // Check if the subkey supplied by buyer is different from the subkey derived from masterKey.
         if (computedSubkey != pom._committedSubKey) {
-            bytes32 committedNode = keccak256(abi.encode(pom._committedSubKey, pom._committed_ri));
+            bytes32 committedNode = keccak256(abi.encodePacked(pom._committedSubKey, pom._committed_ri));
             
             // When the loop exits, committedNode will hold the root of Merkle Tree.
             for (uint i = 0; i < fileInfos[_fileHash].depth; i++)
-                committedNode = keccak256(abi.encode(committedNode, pom._merkleTreePath[i]));
+                committedNode = keccak256(abi.encodePacked(committedNode, pom._merkleTreePath[i]));
             
             // Check if the root equals description.
             if (committedNode == fileInfos[_fileHash].description) {
@@ -139,7 +141,7 @@ contract ConfidentialFairExchange {
     }
 
     modifier Only(bytes32 _fileHash, bytes32 _purchaseID, State _state, address caller) {
-        require(keccak256(abi.encode(_fileHash, purchases[_purchaseID].buyer)) == _purchaseID, "Wrong purchase ID"); 
+        require(bytes32(keccak256(abi.encodePacked(purchases[_purchaseID].buyer, _fileHash))) == _purchaseID, "Wrong purchase ID"); 
         require(purchases[_purchaseID].state == _state, "Purchase in the wrong state"); 
         require(msg.sender == caller, "Wrong function caller"); 
         _;

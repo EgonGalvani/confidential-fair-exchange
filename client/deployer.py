@@ -36,9 +36,9 @@ def deploy_contact(contract_interface, deployer_wallet):
   print(f'Contract deployed at address: { tx_receipt.contractAddress }')
   return tx_receipt 
   
-seller_private_key, seller_address = generate_wallet()
-buyer_private_key, buyer_address = generate_wallet() 
-deployer_private_key, deployer_address = generate_wallet() 
+seller_private_key, seller_address = "0xc718adce055a99f9f81ec53b8d058ae372ba838b471eb5b5db49d79dc27a017f", "0xA616272ABC03a4F2c9c51A1E33d76b4b1f4d2BFd"# generate_wallet()
+buyer_private_key, buyer_address =  "0x25054a40b295fbe002f9df9427dd5b6b0801edd25b30c4a1236b7a087421ed7b", "0x9E18Bc0Cb016bF9BE05eBc9dDe59f8bc63AeF081"
+deployer_private_key, deployer_address = "0xe65bfddbccd18cfe199973521cc284d77567412ea76e9ee3007a11418eb772fd", "0xAaeF0BFc1258800018b92FB63b4DeAd6ADf38b4B"
 
 print("Deployer address and private key " + deployer_address + " " + deployer_private_key)
 input("Please insert balance inside deployer wallet, click when done...") 
@@ -71,7 +71,8 @@ settings_obj = {
   "deployer": {
     "private_key": deployer_private_key,
     "address": deployer_address
-  }
+  }, 
+  "file_price": 100
 }
 
 with open('./data/settings.json', 'w') as f:
