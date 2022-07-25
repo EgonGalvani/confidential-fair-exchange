@@ -15,7 +15,6 @@ contract ConfidentialFairExchange {
     struct FileInfo {
         address seller; 
         uint depth;  // description depth   
-        bytes32 sellerPublicKey; 
         uint price; 
         bytes32 description; 
     }
@@ -23,10 +22,10 @@ contract ConfidentialFairExchange {
     // mapping associating to each hash the corrisponding FileInfo struct 
     mapping(bytes32 => FileInfo) public fileInfos; 
 
-    function publishFile(bytes32 _fileHash, uint _depth, uint _price, bytes32 _sellerPublicKey) public {
+    function publishFile(bytes32 _fileHash, uint _depth, uint _price) public {
         require(fileInfos[_fileHash].seller == address(0), "The file has already been published"); 
 
-        fileInfos[_fileHash] = FileInfo(msg.sender, _depth, _sellerPublicKey, _price, 0); 
+        fileInfos[_fileHash] = FileInfo(msg.sender, _depth, _price, 0); 
         emit FileRandomness(_fileHash, uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp))));
     }
 
@@ -39,7 +38,7 @@ contract ConfidentialFairExchange {
     }
 
     /**** BUYING PHASE *****/
-    event PurchaseRequested(bytes32 indexed fileHash, bytes32 indexed purchaseID, bytes32 secretHash, bytes32 encryptedSecret); 
+    event PurchaseRequested(bytes32 indexed fileHash, bytes32 indexed purchaseID, bytes32 secretHash, bytes encryptedSecret); 
     event EncryptedKeyPublished(bytes32 indexed purchaseID, bytes32 encryptedKey); 
 
     enum State { Requested, EncryptedKeyShared, Completed, Invalid, Timeout} 
@@ -52,7 +51,7 @@ contract ConfidentialFairExchange {
     }
 
     mapping(bytes32 => Purchase) purchases; 
-    function buy(bytes32 _fileHash, bytes32 _secretHash, bytes32 _encryptedSecret) 
+    function buy(bytes32 _fileHash, bytes32 _secretHash, bytes calldata _encryptedSecret) 
         public payable {
         
         require(fileInfos[_fileHash].seller != address(0), "No file with requested hash is present inside the system"); 

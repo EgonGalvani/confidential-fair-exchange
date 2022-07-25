@@ -1,6 +1,7 @@
 from web3 import Web3
 import json
 import secrets 
+from offline_crypto import get_public_key
 
 def calculate_merkle_root(arr):
   length = len(arr)
@@ -15,6 +16,10 @@ def calculate_merkle_root(arr):
     result = Web3.solidityKeccak(['bytes32', 'bytes32'], [left_hash, right_hash])
 
   return result
+
+f = open("./data/settings.json", "r")
+settings = json.loads(f.read())
+f.close() 
 
 file_infos = []
 master_keys_info = []
@@ -52,6 +57,7 @@ for desc_depth in range(6, 15): # 6 to 14
     "desc": description.hex(), 
     "desc_depth": desc_depth, 
     "file_price": 100, 
+    "public_key": "0x" + get_public_key(settings["seller"]["private_key"]).hex() , 
     "samp": list(map(lambda random_index: {"index": random_index, "value": subkeys[random_index]}, random_indices))
   }); 
   

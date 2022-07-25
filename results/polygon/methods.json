@@ -1,0 +1,8 @@
+[
+  {"method":"0x60806040", "name": "constructor"},
+  {"method":"0x9f82956a", "name": "publishFile"},
+  {"method":"0x81c34e9a", "name": "publishDescription"},
+  {"method":"0xfb6f358f", "name": "buy"},
+  {"method":"0x165bea5e", "name": "publishKey"},
+  {"method":"0x12d93731", "name": "raiseObjection"}
+]

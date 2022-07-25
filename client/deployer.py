@@ -4,9 +4,11 @@ from eth_account import Account
 import secrets
 import json
 
+# https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543
+
 # set up provider
-provider_rpc_url = "https://rpc-mumbai.maticvigil.com/"
-web3 = Web3(Web3.HTTPProvider("https://rpc-mumbai.maticvigil.com/"))
+provider_rpc_url =  "https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543" #"https://rpc-mumbai.maticvigil.com/"
+web3 = Web3(Web3.HTTPProvider(provider_rpc_url))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 def generate_wallet(): 
@@ -71,8 +73,7 @@ settings_obj = {
   "deployer": {
     "private_key": deployer_private_key,
     "address": deployer_address
-  }, 
-  "file_price": 100
+  }
 }
 
 with open('./data/settings.json', 'w') as f:

@@ -4,7 +4,8 @@ import json
 import secrets
 from web3 import Web3 
 from web3.middleware import geth_poa_middleware
-from utils import get_events, subscribe_to_event, sign_and_wait
+from utils import get_events, subscribe_to_event, sign_and_wait, byte_xor
+from offline_crypto import _hex_to_bytes, decrypt_nacl
 
 def load_data(): 
   f = open("./data/settings.json", "r")
@@ -36,9 +37,9 @@ def load_contract():
 contract = load_contract()
 
 # function publishFile(bytes32 _fileHash, uint _depth, uint _price, bytes32 _sellerPublicKey) public {
-def publish_file(file_hash, desc_depth, seller_public_key) :
+def publish_file(file_hash, price, desc_depth) :
   nonce = web3.eth.getTransactionCount(settings["seller"]["address"])
-  transaction = contract.functions.publishFile(file_hash, desc_depth, settings["file_price"], seller_public_key).buildTransaction(
+  transaction = contract.functions.publishFile(file_hash, desc_depth, price).buildTransaction(
     {
       # 'gas': 3000000,
       # 'gasPrice': web3.toWei(gas_price, 'gwei'),
@@ -94,29 +95,52 @@ def withdraw(file_hash, purchase_ID):
   print("Requesting withdraw...")
   return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
+
 # first: init all files 
-for f in shared: # len(shared) 
-  public_key = "0x" + secrets.token_hex(32) # TODO: manage encryption system 
-  publish_file(f["file_hash"], f["desc_depth"], public_key) 
+for index, f in enumerate(shared): # len(shared) 
+  print(" == INIT PHASE file with hash: " + f["file_hash"] + " == ")
+  publish_file(f["file_hash"], f["file_price"],f["desc_depth"]) 
   publish_description(f["file_hash"], f["desc"])
-  break 
+print("\nFinished INIT phase for all files")
+
+optimistic = True # how to behave 
 
 # wait for requests of purchase and share corresponding key 
 def callback(event): 
-  file_hash = event.args["fileHash"]
-  purchase_ID = event.args["purchaseID"]
+  global optimistic
+  file_hash, purchase_ID, secret_hash, encrypted_secret = event.args["fileHash"], event.args["purchaseID"],  event.args["secretHash"],  event.args["encryptedSecret"]
 
-  print("Received purchase_id: " + str(purchase_ID))
+  if optimistic: 
+    hex_file_hash = "0x" + file_hash.hex() 
+    file_master_key = None
+   
+    # find the master key 
+    for master_key in master_keys: 
+      if master_key["file_hash"] == hex_file_hash: 
+        file_master_key = master_key["master_key"]
+    if file_master_key == None: 
+      print("Error corresponding master key not found")
+    print("Corresponding master key: " + str(file_master_key))
+    
+    secret = decrypt_nacl(_hex_to_bytes(settings["seller"]["private_key"]), encrypted_secret) 
+    print("Decrypted secret: " + str(secret))
 
-  # TODO: write also the optimistic case 
-  # TODO: check on the encryption and hash of the secret 
-  
-  # pessimistic case: encrypted_master_key = wrong bytes 
-  encrypted_master_key = "0x" + secrets.token_hex(32)
+    # check that secret corresponds to the published hash  
+    secret_hash_computed = Web3.solidityKeccak(['bytes32'], [secret])
+    if secret_hash_computed != secret_hash:
+      print("Error comparing the two hashes: ")
+      print("Secret hash received: " + str(secret_hash))
+      print("Secret hash computed: " + str(secret_hash_computed)) 
+
+    encrypted_master_key = byte_xor(_hex_to_bytes(file_master_key), secret)
+    optimistic = False # manage only the first request optimistic 
+  else: 
+    # pessimistic case: encrypted_master_key = wrong bytes 
+    encrypted_master_key = "0x" + secrets.token_hex(32)
   publish_master_key(encrypted_master_key, file_hash, purchase_ID)
 
 print("Listening for purchase requests...")
 current_block_number = web3.eth.get_block('latest').number
 subscribe_to_event(web3, contract.events.PurchaseRequested, contract.address, callback, current_block_number)
 
-# publish_master_key()
+# TODO: execute the withdraw for seller

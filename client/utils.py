@@ -2,6 +2,8 @@ from web3._utils.events import get_event_data
 import asyncio
 from web3 import Web3
 
+# asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 def sign_and_wait(web3, transaction, private_key):
   signed_txn = web3.eth.account.signTransaction(transaction, private_key=private_key)
   tx_hash = web3.eth.sendRawTransaction(signed_txn.rawTransaction)
@@ -75,7 +77,7 @@ async def _wait_event(web3, event_template, contract_address, from_block, poll_i
     try: 
       new_events = get_events(web3, event_template, contract_address, from_block, latest_block, filters)
     except: 
-      print("Error in eth.get_events")
+      # print("Error in eth.get_events")
       await asyncio.sleep(poll_interval)
       continue 
 
@@ -95,11 +97,16 @@ async def _wait_event(web3, event_template, contract_address, from_block, poll_i
 
 def wait_event_once(web3, event_template, contract_address, from_block, filters=None): 
   loop = asyncio.get_event_loop() 
+  if loop.is_closed(): 
+    loop = asyncio.new_event_loop()
   event = loop.run_until_complete(asyncio.gather(_wait_event(web3, event_template, contract_address, from_block, 5, filters, True)))
-  loop.close() 
   return event  
 
 def subscribe_to_event(web3, event_template, contract_address, callback, from_block, filters=None): 
   loop = asyncio.get_event_loop() 
+  if loop.is_closed(): 
+    loop = asyncio.new_event_loop()
   loop.run_until_complete(asyncio.gather(_wait_event(web3, event_template, contract_address, from_block, 5, filters, False, callback)))
-  loop.close() 
+
+def byte_xor(ba1, ba2):
+  return bytes([_a ^ _b for _a, _b in zip(ba1, ba2)])
