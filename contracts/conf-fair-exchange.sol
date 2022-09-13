@@ -59,6 +59,7 @@ contract ConfidentialFairExchange {
         require(msg.value == fileInfos[_fileHash].price, "The sent amount of money is lower than the file price"); 
 
         bytes32 purchaseID = bytes32(keccak256(abi.encodePacked(msg.sender, _fileHash)));        
+        require(purchases[purchaseID].state == State.Requested, "Purchase already started"); 
         purchases[purchaseID] = Purchase(msg.sender, block.timestamp, State.Requested, 0, _secretHash);  
 
         emit PurchaseRequested(_fileHash, purchaseID, _secretHash, _encryptedSecret);

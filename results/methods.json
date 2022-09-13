@@ -1,0 +1,8 @@
+[
+  {"hex":"0x60806040", "name": "constructor"},
+  {"hex":"0x9f82956a", "name": "publishFile"},
+  {"hex":"0x81c34e9a", "name": "publishDescription"},
+  {"hex":"0xfb6f358f", "name": "buy"},
+  {"hex":"0x165bea5e", "name": "publishKey"},
+  {"hex":"0x12d93731", "name": "raiseObjection"}
+]

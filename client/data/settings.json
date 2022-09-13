@@ -1,6 +1,7 @@
 {
   "rpc_url": "https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543",
-  "contract_address": "0xdac87a8E1E3ABdE75c5512244dD95678a4A675F9",
+  "eth_gas_price": 5,
+  "contract_address": "0xdFB793Af7C0D498bb0604fC63C867C1508EE3C09",
   "seller": {
     "private_key": "0xc718adce055a99f9f81ec53b8d058ae372ba838b471eb5b5db49d79dc27a017f",
     "address": "0xA616272ABC03a4F2c9c51A1E33d76b4b1f4d2BFd"

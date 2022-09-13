@@ -39,8 +39,8 @@ def buy(file_hash, secret_hash, encrypted_secret, price):
   nonce = web3.eth.getTransactionCount(settings["buyer"]["address"])
 
   transaction = contract.functions.buy(file_hash, secret_hash, encrypted_secret).buildTransaction({
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["buyer"]["address"],
       'nonce': nonce,
       'value': price 
@@ -55,8 +55,8 @@ def raiseObjection(file_hash, purchase_ID, secret, committed_ri, committedSubKey
   pom = (committed_ri, committedSubKey, merkleTreePath) # struct represent as tuple 
 
   transaction = contract.functions.raiseObjection(file_hash, purchase_ID, secret, pom).buildTransaction({
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["buyer"]["address"],
       'nonce': nonce,
   })
@@ -69,8 +69,8 @@ def refundToBuyer(file_hash, purchase_ID):
   nonce = web3.eth.getTransactionCount(settings["buyer"]["address"])
 
   transaction = contract.functions.refoundToBuyer(file_hash, purchase_ID).buildTransaction({
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["buyer"]["address"],
       'nonce': nonce,
   })

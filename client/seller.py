@@ -41,8 +41,8 @@ def publish_file(file_hash, price, desc_depth) :
   nonce = web3.eth.getTransactionCount(settings["seller"]["address"])
   transaction = contract.functions.publishFile(file_hash, desc_depth, price).buildTransaction(
     {
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["seller"]["address"],
       'nonce': nonce,
       #'value': settings["file_price"]
@@ -56,8 +56,8 @@ def publish_file(file_hash, price, desc_depth) :
 def publish_description(file_hash, description) :
   nonce = web3.eth.getTransactionCount(settings["seller"]["address"])
   transaction = contract.functions.publishDescription(file_hash, description).buildTransaction({
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["seller"]["address"],
       'nonce': nonce,
   })
@@ -71,8 +71,8 @@ def publish_master_key(encrypted_master_key, file_hash, purchase_ID):
   collateral = contract.functions.COLLATERAL().call(); 
 
   transaction = contract.functions.publishKey(encrypted_master_key, file_hash, purchase_ID).buildTransaction({
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["seller"]["address"],
       'nonce': nonce,
       'value': collateral
@@ -86,15 +86,14 @@ def withdraw(file_hash, purchase_ID):
   nonce = web3.eth.getTransactionCount(settings["seller"]["address"])
 
   transaction = contract.functions.withdraw(file_hash, purchase_ID).buildTransaction({
-      # 'gas': 3000000,
-      # 'gasPrice': web3.toWei(gas_price, 'gwei'),
+      'gas': 3000000,
+      'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["seller"]["address"],
       'nonce': nonce
   })
 
   print("Requesting withdraw...")
   return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
-
 
 # first: init all files 
 for index, f in enumerate(shared): # len(shared) 

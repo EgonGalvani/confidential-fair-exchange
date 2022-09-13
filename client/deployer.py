@@ -11,6 +11,8 @@ provider_rpc_url =  "https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d5
 web3 = Web3(Web3.HTTPProvider(provider_rpc_url))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+eth_gas_price = 5
+
 def generate_wallet(): 
   priv = secrets.token_hex(32)
   private_key = "0x" + priv
@@ -61,6 +63,7 @@ print(deploy_tx_receipt)
 
 settings_obj = {
   "rpc_url": provider_rpc_url, 
+  "eth_gas_price": eth_gas_price, 
   "contract_address": deploy_tx_receipt.contractAddress, 
   "seller": {
     "private_key": seller_private_key, 
