@@ -23,6 +23,7 @@ To create some sample data for testing, the `client/offline_data_generator.py` s
 
 # Usage
 We provide two main scripts: `client/seller.py` and `client/buyer.py`, that as the names suggest, allow to manage operations for seller and buyer respectively. Both scripts provide a simple user interface that allows to easily interact with the smart contract. Example of usage:  
+https://user-images.githubusercontent.com/27569184/190029652-9307432c-08da-4316-8082-6d508c679286.mp4
 
 # Settings 
 The file `client/data/settings.json` contains all the settings used by the scripts. 
