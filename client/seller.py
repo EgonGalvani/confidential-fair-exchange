@@ -78,7 +78,6 @@ def publish_master_key(encrypted_master_key, file_hash, purchase_ID):
       'value': collateral
   })
 
-  print("Publishing encrypted master key...")
   return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
 # function withdraw(bytes32 _fileHash, bytes32 _purchaseID) 
@@ -95,34 +94,37 @@ def withdraw(file_hash, purchase_ID):
   print("Requesting withdraw...")
   return sign_and_wait(web3, transaction, settings["seller"]["private_key"])
 
-# first: init all files 
-for index, f in enumerate(shared): # len(shared) 
-  print(" == INIT PHASE file with hash: " + f["file_hash"] + " == ")
-  publish_file(f["file_hash"], f["file_price"],f["desc_depth"]) 
-  publish_description(f["file_hash"], f["desc"])
-print("\nFinished INIT phase for all files")
-
-optimistic = True # how to behave 
-
 # wait for requests of purchase and share corresponding key 
 def callback(event): 
   global optimistic
   file_hash, purchase_ID, secret_hash, encrypted_secret = event.args["fileHash"], event.args["purchaseID"],  event.args["secretHash"],  event.args["encryptedSecret"]
 
+  print("== Received buy request ==")
+  print("Purchase ID: 0x" + purchase_ID.hex())
+  print("File hash: 0x" + file_hash.hex())
+
+  optimistic = input("Do you want to share the correct key? (Y/N)")
+  if optimistic == "Y": 
+    optimistic = True
+  else: 
+    optimistic = False
+
+  # if seller behave in the correct case (share the correct master key)
   if optimistic: 
     hex_file_hash = "0x" + file_hash.hex() 
     file_master_key = None
    
-    # find the master key 
+    # find the master key for the requested file 
     for master_key in master_keys: 
       if master_key["file_hash"] == hex_file_hash: 
         file_master_key = master_key["master_key"]
     if file_master_key == None: 
       print("Error corresponding master key not found")
-    print("Corresponding master key: " + str(file_master_key))
+    print("Master key: " + file_master_key)
     
+    # decrypt the secret 
     secret = decrypt_nacl(_hex_to_bytes(settings["seller"]["private_key"]), encrypted_secret) 
-    print("Decrypted secret: " + str(secret))
+    print("Secret: 0x" + secret.hex())
 
     # check that secret corresponds to the published hash  
     secret_hash_computed = Web3.solidityKeccak(['bytes32'], [secret])
@@ -132,14 +134,63 @@ def callback(event):
       print("Secret hash computed: " + str(secret_hash_computed)) 
 
     encrypted_master_key = byte_xor(_hex_to_bytes(file_master_key), secret)
-    optimistic = False # manage only the first request optimistic 
   else: 
-    # pessimistic case: encrypted_master_key = wrong bytes 
-    encrypted_master_key = "0x" + secrets.token_hex(32)
+    # pessimistic case: share a wrong master key wrong bytes 
+    encrypted_master_key = secrets.token_bytes(32)
+  
+  print("Publishing key: 0x" + encrypted_master_key.hex())
   publish_master_key(encrypted_master_key, file_hash, purchase_ID)
+  print("\n\n")
 
-print("Listening for purchase requests...")
-current_block_number = web3.eth.get_block('latest').number
-subscribe_to_event(web3, contract.events.PurchaseRequested, contract.address, callback, current_block_number)
+def print_menu(): 
+  print('\nCommands:')
+  print(' [1] Init file\t\t[2] Wait for buy requests')
+  print(' [3] List files\t\t[4] Check balance')
+  print(' [5] Exit\n') 
 
+print('FairDrop')
+print('Client Application for Seller')
+print()
+print(f'Contract: {contract.address}') 
+print_menu() 
 # TODO: execute the withdraw for seller
+
+while True:
+  choice = int(input('Enter your choice: '))
+  if choice == 1:
+    print("Started init procedure")
+
+    for index, f in enumerate(shared): # len(shared) 
+      print("  " + str(index) + ") " + str(f["file_hash"]))
+  
+    # TODO: add possibility to select local file 
+    index = int(input("Select index of file to init: "))
+    f = shared[index] 
+    publish_file(f["file_hash"], f["file_price"],f["desc_depth"]) 
+    publish_description(f["file_hash"], f["desc"])
+  elif choice == 2:
+    print("Listening for purchase requests...")
+    current_block_number = web3.eth.get_block('latest').number
+    subscribe_to_event(web3, contract.events.PurchaseRequested, contract.address, callback, current_block_number)
+  elif choice == 3: 
+    print("File hashes: ")
+    past_init_events = get_events(web3, contract.events.FilePublished, contract.address)
+    for past_init_event in past_init_events: 
+      print(" - 0x" + past_init_event.args["fileHash"].hex())
+  elif choice == 4: 
+    balance = web3.eth.get_balance(settings["seller"]["address"])
+    print("Current balance: " + str(web3.fromWei(balance, 'ether')) + " ETH")
+  elif choice == 5: 
+    break 
+  else:
+    print('Invalid choice. Valid chocices are 1 to 5.\n')
+
+  print_menu() 
+# first: init all files (FOR PERFORMANCE EVALUATION)
+''' 
+for index, f in enumerate(shared): # len(shared) 
+  print(" == INIT PHASE file with hash: " + f["file_hash"] + " == ")
+  publish_file(f["file_hash"], f["file_price"],f["desc_depth"]) 
+  publish_description(f["file_hash"], f["desc"])
+print("\nFinished INIT phase for all files")
+'''

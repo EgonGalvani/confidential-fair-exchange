@@ -9,7 +9,13 @@ def sign_and_wait(web3, transaction, private_key):
   tx_hash = web3.eth.sendRawTransaction(signed_txn.rawTransaction)
   tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
   
-  print("Transaction correctly executed")
+  if tx_receipt.status == 0: 
+    print("Transaction reversed")
+  elif tx_receipt.status == 1: 
+    print("Transaction correctly mined")
+  else: 
+    print("Transaction status unknown")
+
   return tx_receipt
 
 def calculate_merkle_root(arr):
@@ -43,7 +49,7 @@ def calculate_merkle_proof(nodes, desc_depth):
 
 def get_events(web3, event_template, contract_address, from_block="", to_block="latest", filter = None): 
   if from_block == "": 
-    from_block = web3.eth.get_block('latest').number -950
+    from_block = 0 # web3.eth.get_block('latest').number -950
 
   events = []
   # print("Requesting logs from " + str(from_block) + " to " + str(to_block) + " at address: " + str(contract_address))

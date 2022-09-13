@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 contract ConfidentialFairExchange {
    
     uint constant public MAX_INTERVAL = 3600; // 1 h timemax inteval between operations 
-    uint constant public COLLATERAL = 100 wei; // TODO: substitute with actual depth-depending cost 
+    uint constant public COLLATERAL = 100 wei; 
 
     /******** INIT PHASE *******/
     event FileRandomness(bytes32 indexed fileHash, uint randomness); 
