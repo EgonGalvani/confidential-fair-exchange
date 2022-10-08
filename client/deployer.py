@@ -4,10 +4,14 @@ from eth_account import Account
 import secrets
 import json
 
-# https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543
+# ropsten: 0xEb3888E975E2a38E49Aba31c0F4eF80e69eF5C7a
 
+# https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543
+# https://goerli.infura.io/v3/77f5a5f714034eea84b74c03ee61c455
 # set up provider
-provider_rpc_url =  "https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543" #"https://rpc-mumbai.maticvigil.com/"
+#provider_rpc_url = "https://ropsten.infura.io/v3/0e65b81adc554fa889b8ac769a89d543" #"https://rpc-mumbai.maticvigil.com/"
+provider_rpc_url = "https://goerli.infura.io/v3/77f5a5f714034eea84b74c03ee61c455" 
+
 web3 = Web3(Web3.HTTPProvider(provider_rpc_url))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
