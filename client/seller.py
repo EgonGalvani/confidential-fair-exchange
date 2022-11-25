@@ -146,14 +146,13 @@ def print_menu():
   print('\nCommands:')
   print(' [1] Init file\t\t[2] Wait for buy requests')
   print(' [3] List files\t\t[4] Check balance')
-  print(' [5] Exit\n') 
+  print(' [5] Withdraw\t\t[6] Exit\n') 
 
 print('FairDrop')
 print('Client Application for Seller')
 print()
 print(f'Contract: {contract.address}') 
 print_menu() 
-# TODO: execute the withdraw for seller
 
 while True:
   choice = int(input('Enter your choice: '))
@@ -181,6 +180,11 @@ while True:
     balance = web3.eth.get_balance(settings["seller"]["address"])
     print("Current balance: " + str(web3.fromWei(balance, 'ether')) + " ETH")
   elif choice == 5: 
+    file_hash = input("Insert hash of the file to withdraw: ")
+    sale_id = input("Insert sale id to withdraw: ")
+    withdraw(file_hash, sale_id)
+    print("Withdraw executed")
+  elif choice == 6: 
     break 
   else:
     print('Invalid choice. Valid chocices are 1 to 5.\n')

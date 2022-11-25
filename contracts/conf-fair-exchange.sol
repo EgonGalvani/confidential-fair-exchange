@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 contract ConfidentialFairExchange {
    
-    uint constant public MAX_INTERVAL = 3600; // 1 h timemax inteval between operations 
+    uint constant public MAX_INTERVAL = 2 minutes; // 2 mins  timemax inteval between operations 
     uint constant public COLLATERAL = 100 wei; 
 
     /******** INIT PHASE *******/

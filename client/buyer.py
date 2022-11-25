@@ -70,7 +70,7 @@ def raiseObjection(file_hash, purchase_ID, secret, committed_ri, committedSubKey
 def refundToBuyer(file_hash, purchase_ID):
   nonce = web3.eth.getTransactionCount(settings["buyer"]["address"])
 
-  transaction = contract.functions.refoundToBuyer(file_hash, purchase_ID).buildTransaction({
+  transaction = contract.functions.refundToBuyer(file_hash, purchase_ID).buildTransaction({
       'gas': 3000000,
       'gasPrice': web3.toWei(settings["eth_gas_price"], 'gwei'),
       'from': settings["buyer"]["address"],
@@ -87,15 +87,14 @@ def refundToBuyer(file_hash, purchase_ID):
 def print_menu():   
   print('\nCommands:')
   print(' [1] List files\t\t[2] Execute buy request')
-  print(' [3] Check balance\t[4] Exit\n')
+  print(' [3] Check balance\t[4] Refund to buyer\n')
+  print(' [5] Exit')
 
 print('FairDrop')
 print('Client Application for Buyer')
 print()
 print(f'Contract: {contract.address}') 
 print_menu() 
-
-# TODO: execute the withdraw for seller
 
 while True:
   choice = int(input('Enter your choice: '))
@@ -158,7 +157,12 @@ while True:
     balance = web3.eth.get_balance(settings["buyer"]["address"])
     print("Current balance: " + str(web3.fromWei(balance, 'ether')) + " ETH")
   elif choice == 4: 
-    break
+    file_hash = input("Insert hash of the file to request refund for: ")
+    sale_id = input("Insert sale id to request refund for: ")
+    refundToBuyer(file_hash, sale_id)
+    print("Refund executed")
+  elif choice == 5: 
+    break 
   else:
     print('Invalid choice. Valid chocices are 1 to 4.\n')
 

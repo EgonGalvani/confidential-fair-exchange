@@ -1,7 +1,7 @@
 {
   "rpc_url": "https://goerli.infura.io/v3/77f5a5f714034eea84b74c03ee61c455",
   "eth_gas_price": 5,
-  "contract_address": "0xdac87a8E1E3ABdE75c5512244dD95678a4A675F9",
+  "contract_address": "0x54567cfD53EcA3F0F18D438f084d3a54349Ff131",
   "seller": {
     "private_key": "0xc718adce055a99f9f81ec53b8d058ae372ba838b471eb5b5db49d79dc27a017f",
     "address": "0xA616272ABC03a4F2c9c51A1E33d76b4b1f4d2BFd"
