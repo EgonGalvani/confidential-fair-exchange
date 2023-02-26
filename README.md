@@ -1,3 +1,6 @@
+# Intro
+This repo contains the code of fair exchange protocol described in ["FairDrop: a Confidential Fair Exchange Protocol for Media Workers"](https://thesis.unipd.it/handle/20.500.12608/42055) 
+
 # Prerequisite 
 Client applications require web3.py and PyNaCl, that can be installed via `pip install web3 PyNaCl`.
 The prototype uses Infura API to connect Ethereum network, and a API key is already provided inside the `client/data/settings.json` file. 
